@@ -42,6 +42,16 @@ class DoubleDQN(DQN):
         # TODO: Double DQN. Choose the best next action with the *online* network
         # (self.q_net), then evaluate that action with the *target* network
         # (next_q_target above). Return a (batch, 1) tensor.
+        next_q_online = self.q_net(next_observations)
+        online_max, online_idx = next_q_online.max(dim = 1, keepdim=True)
+        next_q = next_q_target.gather(dim = 1, index = online_idx)
+        return next_q
+
+
+
+        
+
+
         raise NotImplementedError("Implement the Double DQN target in DoubleDQN.next_q_values()")
 
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
@@ -91,13 +101,13 @@ my_config = {
     # implemented the Double DQN target there, and compare the two.
     "algorithm": DoubleDQN,
     "algorithm_kwargs": {
-        "double_q": False,
+        "double_q": True,
         "buffer_size": 100_000,  # SB3's default (1M) needs ~4 GB of RAM for 2048's observations
     },
     "policy_network": "MlpPolicy",
     "save_path": "models/model_2048",  # saved as models/model_2048.zip, the file you submit
     "num_train_envs": 4,
-    "epoch_num": 5,
+    "epoch_num": 50,
     "timesteps_per_epoch": 100,
     "eval_episode_num": 10,
 }
