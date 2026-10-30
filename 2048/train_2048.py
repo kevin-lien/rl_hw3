@@ -95,20 +95,26 @@ register(
 
 # Set hyper params (configurations) for training
 my_config = {
-    "run_id": "example",
-    # 2048 must be trained with DQN. DoubleDQN (above) with double_q=False is
+    "run_id": "ddqn_weight1000",
+    # 2048 must be traine with DQN. DoubleDQN (above) with double_q=False is
     # exactly SB3's DQN plus Q-value logging; set double_q=True once you've
     # implemented the Double DQN target there, and compare the two.
     "algorithm": DoubleDQN,
     "algorithm_kwargs": {
         "double_q": True,
         "buffer_size": 100_000,  # SB3's default (1M) needs ~4 GB of RAM for 2048's observations
+        "batch_size": 256,
+        "policy_kwargs": {"net_arch": [256, 256]},
+
+        "exploration_fraction": 0.1,
+        "exploration_initial_eps": 1,
+        "exploration_final_eps": 0.05,
     },
     "policy_network": "MlpPolicy",
-    "save_path": "models/model_2048",  # saved as models/model_2048.zip, the file you submit
+    "save_path": "models/model_2048_weight1000",  # saved as models/model_2048.zip, the file you submit
     "num_train_envs": 4,
-    "epoch_num": 50,
-    "timesteps_per_epoch": 100,
+    "epoch_num": 20,
+    "timesteps_per_epoch": 20000,
     "eval_episode_num": 10,
 }
 
@@ -165,6 +171,15 @@ def train(eval_env, model, config):
         ### Evaluation
         eval_start = time.time()
         avg_score, avg_highest = eval(eval_env, model, config["eval_episode_num"])
+
+        ###### add
+        model.logger.record("eval/avg_score", avg_score)
+        model.logger.record("eval/avg_highest", avg_highest)
+        model.logger.dump(step=model.num_timesteps)
+
+
+        ######
+
         eval_duration = time.time() - eval_start
 
         # Print training progress and speed
@@ -209,12 +224,12 @@ def train(eval_env, model, config):
 if __name__ == "__main__":
 
     # Create wandb session (Uncomment to enable wandb logging)
-    # run = wandb.init(
-    #     project="assignment_3",
-    #     config=my_config,
-    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-    #     id=my_config["run_id"]
-    # )
+    run = wandb.init(
+        project="assignment_3",
+        config=my_config,
+        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+        id=my_config["run_id"]
+    )
 
     train_env = SubprocVecEnv([make_env for _ in range(my_config["num_train_envs"])])
 
@@ -230,3 +245,5 @@ if __name__ == "__main__":
         **my_config["algorithm_kwargs"],
     )
     train(eval_env, model, my_config)
+
+    run.finish()

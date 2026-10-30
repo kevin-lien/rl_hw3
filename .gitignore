@@ -1,1 +1,39 @@
+# Backup
 /2048_git_backup/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Training logs
+wandb/
+tensorboard/
+events.out.tfevents.*
+/2048/example/
+/2048/ddqn*/
+
+# Locally trained checkpoints
+/2048/models/model_2048*.zip
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Local credentials
+.env
+.env.*
+!.env.example
+
+# Local environments and caches
+.venv*/
+.cache/
+
+# Training output and backups
+/astro_party/runs/
+/astro_undo_backup/
+/astro_party/models/model_astro_party*.zip

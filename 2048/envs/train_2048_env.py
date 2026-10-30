@@ -67,7 +67,7 @@ class My2048Env(gym.Env):
         self.observation_space = spaces.Box(0, 1, (layers, self.w, self.h), dtype=int)
         
         # TODO: Set negative reward (penalty) for illegal moves (optional)
-        self.set_illegal_move_reward(0.)
+        self.set_illegal_move_reward(-300)
         
         self.set_max_tile(None)
 
@@ -110,9 +110,12 @@ class My2048Env(gym.Env):
             'score': 0,
         }
         try:
-            # assert info['illegal_move'] == False
+            assert info['illegal_move'] == False
+            
+
             pre_state = self.Matrix.copy()
             score = float(self.move(action))
+            self.foul_count = 0
             self.score += score
             assert score <= 2**(self.w*self.h)
             self.add_tile()
@@ -122,18 +125,31 @@ class My2048Env(gym.Env):
             # TODO: Add reward according to weighted states (optional)
             weight = np.array([
                     [0  , 0  , 0  , 0  ],
-                    [0  , 0  , 0  , 0  ],
-                    [0  , 0  , 0  , 0  ],
-                    [0  , 0  , 0  , 0  ]])
-            reward += 0
+                    [0.5  , 0  , 0  , 0  ],
+                    [0.75  , 0.5  , 0  , 0  ],
+                    [1  , 0.75  ,0.5  , 0  ]])
+            pre_sum = np.sum(weight*pre_state)
+            cur_sum = np.sum(weight*self.Matrix)
+            reward += (cur_sum-pre_sum)
+
+            # empty_before = np.count_nonzero(pre_state == 0)
+            # empty_after = np.count_nonzero(self.Matrix == 0)
+            # empty_change = empty_after - empty_before
+
+            
+            # empty_factor = 2
+            # reward += empty_change*empty_factor
             
         except IllegalMove:
             logging.debug("Illegal move")
             info['illegal_move'] = True
             reward = self.illegal_move_reward
+            
 
             # TODO: Modify this part for the agent to have a chance to explore other actions (optional)
-            done = True
+            self.foul_count += 1
+            done = self.isend() or self.foul_count >= 3
+            # done = True
 
         truncate = False
         info['highest'] = self.highest()
